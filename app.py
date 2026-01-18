@@ -1,11 +1,8 @@
 import json
 import logging
 import time
-import os
 from datetime import datetime
-from pathlib import Path
 
-import pandas as pd
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import (
@@ -102,59 +99,6 @@ def book_to_dict(b: Book):
 
 
 # =====================
-# DB INIT + SEED (IMPORTANTE PRO RENDER)
-# =====================
-
-CSV_PATH = Path("data/books.csv")
-
-
-def seed_books_if_empty():
-    """
-    Carrega livros do CSV somente se a tabela estiver vazia.
-    Isso evita depender de scripts no build do Render.
-    """
-    try:
-        if not CSV_PATH.exists():
-            logger.warning("CSV não encontrado em data/books.csv - seed ignorado.")
-            return
-
-        if Book.query.first():
-            logger.info("Banco já possui livros - seed ignorado.")
-            return
-
-        logger.info("Banco vazio - carregando livros do CSV...")
-
-        df = pd.read_csv(CSV_PATH)
-        inserted = 0
-
-        for _, row in df.iterrows():
-            title = str(row["title"]).strip()
-            category = str(row.get("category", "")).strip() or None
-
-            book = Book(
-                title=title,
-                price=float(row["price"]),
-                rating=row.get("rating"),
-                availability=row.get("availability"),
-                category=category,
-                image_url=row.get("image_url"),
-            )
-            db.session.add(book)
-            inserted += 1
-
-        db.session.commit()
-        logger.info(f"Seed concluído com sucesso: {inserted} livros inseridos!")
-
-    except Exception as e:
-        logger.exception(f"Erro ao fazer seed do CSV: {e}")
-
-
-with app.app_context():
-    db.create_all()
-    seed_books_if_empty()
-
-
-# =====================
 # AUTH (DESAFIO 1)
 # =====================
 
@@ -181,19 +125,15 @@ def auth_register():
     """
     data = request.get_json(force=True)
 
-    username = data.get("username")
-    password = data.get("password")
-
-    if not username or not password:
+    if "username" not in data or "password" not in data:
         return jsonify({"error": "username and password are required"}), 400
 
-    if User.query.filter_by(username=username).first():
+    if User.query.filter_by(username=data["username"]).first():
         return jsonify({"error": "User already exists"}), 400
 
-    user = User(username=username, password=password)
+    user = User(username=data["username"], password=data["password"])
     db.session.add(user)
     db.session.commit()
-
     return jsonify({"message": "User created"}), 201
 
 
@@ -226,7 +166,6 @@ def auth_login():
 
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
-
     return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
 
 
@@ -387,7 +326,6 @@ def stats_categories():
     """
     books = Book.query.all()
     by_cat = {}
-
     for b in books:
         cat = b.category or "Unknown"
         by_cat.setdefault(cat, {"total": 0, "sum_price": 0.0})
@@ -399,8 +337,8 @@ def stats_categories():
         "total_books": v["total"],
         "avg_price": round(v["sum_price"] / v["total"], 2)
     } for c, v in by_cat.items()]
-
     result.sort(key=lambda x: x["total_books"], reverse=True)
+
     return jsonify(result), 200
 
 
@@ -421,7 +359,13 @@ def top_rated():
       200: {description: Top rated books}
     """
     limit = request.args.get("limit", default=10, type=int)
-    books = Book.query.filter(Book.rating == "Five").order_by(Book.price.asc()).limit(limit).all()
+    books = (
+        Book.query
+        .filter(Book.rating == "Five")
+        .order_by(Book.price.asc())
+        .limit(limit)
+        .all()
+    )
     return jsonify([book_to_dict(b) for b in books]), 200
 
 
@@ -581,10 +525,4 @@ def scraping_trigger():
     return jsonify({"message": "Scraping trigger received", "triggered_by_user_id": user_id}), 200
 
 
-# =====================
-# MAIN
-# =====================
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
