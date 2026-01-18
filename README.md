@@ -1,14 +1,11 @@
-<<<<<<< HEAD
-# tech-challenge-fase1
-=======
-# 📚 Tech Challenge — API Pública de Livros
+#  Tech Challenge — API Pública de Livros
 
 Este projeto faz parte do **Tech Challenge – Fase 1** da Pós Tech.  
 O objetivo é construir uma **infraestrutura completa de dados** para um sistema de recomendação de livros, contemplando **extração, processamento, armazenamento e disponibilização via API pública**, com foco em **Machine Learning**.
 
 ---
 
-## 🎯 Objetivo do Projeto
+##  Objetivo do Projeto
 
 Criar um pipeline de dados que:
 
@@ -19,7 +16,7 @@ Criar um pipeline de dados que:
 
 ---
 
-## 🏗️ Arquitetura do Projeto (Pipeline)
+##  Arquitetura do Projeto (Pipeline)
 
 ```
 Web Scraping
@@ -38,7 +35,7 @@ Consumo:
 
 ---
 
-## 🧰 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 - **Scraping:** BeautifulSoup + Requests  
 - **Persistência:** SQLite + SQLAlchemy + Alembic  
@@ -49,7 +46,7 @@ Consumo:
 
 ---
 
-## 📂 Estrutura do Repositório
+##  Estrutura do Repositório
 
 ```
 .
@@ -71,27 +68,27 @@ Consumo:
 
 ---
 
-## ⚙️ Instalação e Configuração (Windows)
+##  Instalação e Configuração (Windows)
 
-### 1️⃣ Criar ambiente virtual
+### 1️ Criar ambiente virtual
 
 ```bash
 python -m venv venv
 ```
 
-### 2️⃣ Ativar o ambiente virtual
+### 2️ Ativar o ambiente virtual
 
 ```bash
 venv\Scripts\activate
 ```
 
-✅ Se der certo, o PowerShell vai ficar assim:
+ Se der certo, o PowerShell vai ficar assim:
 
 ```
 (venv) PS C:\...
 ```
 
-### 3️⃣ Instalar dependências
+### 3️ Instalar dependências
 
 ```bash
 pip install -r requirements.txt
@@ -102,9 +99,9 @@ O arquivo **requirements.txt precisa ficar na raiz do projeto**, no mesmo nível
 
 ---
 
-## ▶️ Como Executar o Projeto (Passo a Passo)
+## ▶ Como Executar o Projeto (Passo a Passo)
 
-### 1️⃣ Rodar o Web Scraping (gera o CSV)
+### 1️ Rodar o Web Scraping (gera o CSV)
 
 ```bash
 python scripts\scrape_books.py
@@ -121,7 +118,7 @@ O CSV deve ter **1000 linhas**.
 
 ---
 
-### 2️⃣ Criar tabelas no banco (SQLite)
+### 2️ Criar tabelas no banco (SQLite)
 
 ```bash
 python app.py
@@ -136,7 +133,7 @@ CTRL + C
 
 ---
 
-### 3️⃣ Popular o banco com o CSV
+### 3️ Popular o banco com o CSV
 
 ```bash
 python scripts\load_books_csv.py
@@ -151,20 +148,20 @@ python scripts\load_books_csv.py
 
 ---
 
-### 4️⃣ Rodar a API
+### 4️ Rodar a API
 
 ```bash
 python app.py
 ```
 
-✅ A API ficará disponível em:
+ A API ficará disponível em:
 
 - API: http://127.0.0.1:5000  
 - Swagger: http://127.0.0.1:5000/apidocs  
 
 ---
 
-## ✅ Endpoints Obrigatórios (Core)
+##  Endpoints Obrigatórios (Core)
 
 ### GET /api/v1/books
 Lista todos os livros disponíveis.
@@ -260,7 +257,7 @@ Resposta:
 
 ---
 
-## ⭐ Endpoints Opcionais (Insights)
+##  Endpoints  
 
 ### GET /api/v1/stats/overview
 Estatísticas gerais da coleção (total, preço médio, distribuição de ratings)
@@ -276,7 +273,7 @@ Filtra por faixa de preço
 
 ---
 
-## 🔐 Desafio 1 — Autenticação JWT (Bônus)
+##  Autenticação JWT 
 
 ### POST /api/v1/auth/login
 Obtém token JWT.
@@ -300,7 +297,7 @@ Renova token JWT.
 
 ---
 
-## 🤖 Desafio 2 — Pipeline ML-Ready (Bônus)
+##  Desafio 2 — Pipeline ML-Ready (Bônus)
 
 ### GET /api/v1/ml/features
 Retorna features limpas para ML.
@@ -313,7 +310,7 @@ Endpoint para receber predições feitas pelo modelo.
 
 ---
 
-## 📊 Desafio 3 — Dashboard (Streamlit)
+##  Desafio 3 — Dashboard (Streamlit)
 
 Rodar o dashboard:
 
@@ -321,12 +318,12 @@ Rodar o dashboard:
 streamlit run dashboard\streamlit_app.py
 ```
 
-✅ O Streamlit vai abrir um link no navegador.  
+ O Streamlit vai abrir um link no navegador.  
 Se aparecer a pergunta sobre rede pública/privada, escolha **Public** para compartilhar com avaliador.
 
 ---
 
-## 🚀 Deploy Público
+##  Deploy Público
 
 Cole aqui o link do deploy:
 
@@ -343,4 +340,4 @@ Cole aqui o link do vídeo:
 ```
 COLE_AQUI_O_LINK_DO_VIDEO
 ```
->>>>>>> c7a9978 (Initial commit - Tech Challenge API de livros)
+
