@@ -1,17 +1,15 @@
-# Ambiente virtual (NUNCA subir pro GitHub)
+# ambiente virtual
 venv/
-.venv/
-env/
 
-# Cache Python
+# cache python
 __pycache__/
 *.pyc
 
-# Banco local (não sobe)
+# banco local
 app.db
 
-# Arquivos locais/sensíveis
+# arquivos de ambiente
 .env
 
-# Streamlit (se existir)
-.streamlit/
+# logs
+*.log
