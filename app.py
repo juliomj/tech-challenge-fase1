@@ -1,8 +1,11 @@
 import json
 import logging
 import time
+import os
 from datetime import datetime
+from pathlib import Path
 
+import pandas as pd
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import (
@@ -25,10 +28,6 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 swagger = Swagger(app)
 
-with app.app_context():
-    db.create_all()
-
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_api")
 
@@ -39,9 +38,11 @@ logger = logging.getLogger("books_api")
 METRICS = {"requests_total": 0, "by_route": {}, "avg_latency_ms": 0.0}
 _LAT_SUM = 0.0
 
+
 @app.before_request
 def _start_timer():
     request._start_time = time.time()
+
 
 @app.after_request
 def _after_request(response):
@@ -65,6 +66,7 @@ def _after_request(response):
     logger.info(json.dumps(payload, ensure_ascii=False))
     return response
 
+
 # =====================
 # MODELS
 # =====================
@@ -74,6 +76,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
+
 
 class Book(db.Model):
     __tablename__ = "books"
@@ -85,6 +88,7 @@ class Book(db.Model):
     category = db.Column(db.String(100))
     image_url = db.Column(db.String(255))
 
+
 def book_to_dict(b: Book):
     return {
         "id": b.id,
@@ -95,6 +99,60 @@ def book_to_dict(b: Book):
         "category": b.category,
         "image_url": b.image_url,
     }
+
+
+# =====================
+# DB INIT + SEED (IMPORTANTE PRO RENDER)
+# =====================
+
+CSV_PATH = Path("data/books.csv")
+
+
+def seed_books_if_empty():
+    """
+    Carrega livros do CSV somente se a tabela estiver vazia.
+    Isso evita depender de scripts no build do Render.
+    """
+    try:
+        if not CSV_PATH.exists():
+            logger.warning("CSV não encontrado em data/books.csv - seed ignorado.")
+            return
+
+        if Book.query.first():
+            logger.info("Banco já possui livros - seed ignorado.")
+            return
+
+        logger.info("Banco vazio - carregando livros do CSV...")
+
+        df = pd.read_csv(CSV_PATH)
+        inserted = 0
+
+        for _, row in df.iterrows():
+            title = str(row["title"]).strip()
+            category = str(row.get("category", "")).strip() or None
+
+            book = Book(
+                title=title,
+                price=float(row["price"]),
+                rating=row.get("rating"),
+                availability=row.get("availability"),
+                category=category,
+                image_url=row.get("image_url"),
+            )
+            db.session.add(book)
+            inserted += 1
+
+        db.session.commit()
+        logger.info(f"Seed concluído com sucesso: {inserted} livros inseridos!")
+
+    except Exception as e:
+        logger.exception(f"Erro ao fazer seed do CSV: {e}")
+
+
+with app.app_context():
+    db.create_all()
+    seed_books_if_empty()
+
 
 # =====================
 # AUTH (DESAFIO 1)
@@ -122,13 +180,22 @@ def auth_register():
       400: {description: User already exists}
     """
     data = request.get_json(force=True)
-    if User.query.filter_by(username=data["username"]).first():
+
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"error": "username and password are required"}), 400
+
+    if User.query.filter_by(username=username).first():
         return jsonify({"error": "User already exists"}), 400
 
-    user = User(username=data["username"], password=data["password"])
+    user = User(username=username, password=password)
     db.session.add(user)
     db.session.commit()
+
     return jsonify({"message": "User created"}), 201
+
 
 @app.route("/api/v1/auth/login", methods=["POST"])
 def auth_login():
@@ -152,13 +219,16 @@ def auth_login():
       401: {description: Invalid credentials}
     """
     data = request.get_json(force=True)
+
     user = User.query.filter_by(username=data.get("username")).first()
     if not user or user.password != data.get("password"):
         return jsonify({"error": "Invalid credentials"}), 401
 
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
+
     return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
+
 
 @app.route("/api/v1/auth/refresh", methods=["POST"])
 @jwt_required(refresh=True)
@@ -176,6 +246,7 @@ def auth_refresh():
     new_access = create_access_token(identity=user_id)
     return jsonify({"access_token": new_access}), 200
 
+
 # =====================
 # CORE ENDPOINTS (OBRIGATÓRIOS)
 # =====================
@@ -192,6 +263,7 @@ def health():
     """
     return jsonify({"status": "ok"}), 200
 
+
 @app.route("/api/v1/books", methods=["GET"])
 def get_books():
     """
@@ -204,6 +276,7 @@ def get_books():
     """
     books = Book.query.order_by(Book.id.asc()).all()
     return jsonify([book_to_dict(b) for b in books]), 200
+
 
 @app.route("/api/v1/books/<int:book_id>", methods=["GET"])
 def get_book(book_id):
@@ -223,6 +296,7 @@ def get_book(book_id):
     """
     b = Book.query.get_or_404(book_id)
     return jsonify(book_to_dict(b)), 200
+
 
 @app.route("/api/v1/books/search", methods=["GET"])
 def search_books():
@@ -255,6 +329,7 @@ def search_books():
     books = query.order_by(Book.id.asc()).all()
     return jsonify([book_to_dict(b) for b in books]), 200
 
+
 @app.route("/api/v1/categories", methods=["GET"])
 def get_categories():
     """
@@ -268,6 +343,7 @@ def get_categories():
     rows = db.session.query(Book.category).distinct().order_by(Book.category.asc()).all()
     cats = [r[0] for r in rows if r[0]]
     return jsonify(cats), 200
+
 
 # =====================
 # INSIGHTS (OPCIONAIS)
@@ -298,6 +374,7 @@ def stats_overview():
         "rating_distribution": rating_dist
     }), 200
 
+
 @app.route("/api/v1/stats/categories", methods=["GET"])
 def stats_categories():
     """
@@ -310,6 +387,7 @@ def stats_categories():
     """
     books = Book.query.all()
     by_cat = {}
+
     for b in books:
         cat = b.category or "Unknown"
         by_cat.setdefault(cat, {"total": 0, "sum_price": 0.0})
@@ -321,9 +399,10 @@ def stats_categories():
         "total_books": v["total"],
         "avg_price": round(v["sum_price"] / v["total"], 2)
     } for c, v in by_cat.items()]
-    result.sort(key=lambda x: x["total_books"], reverse=True)
 
+    result.sort(key=lambda x: x["total_books"], reverse=True)
     return jsonify(result), 200
+
 
 @app.route("/api/v1/books/top-rated", methods=["GET"])
 def top_rated():
@@ -344,6 +423,7 @@ def top_rated():
     limit = request.args.get("limit", default=10, type=int)
     books = Book.query.filter(Book.rating == "Five").order_by(Book.price.asc()).limit(limit).all()
     return jsonify([book_to_dict(b) for b in books]), 200
+
 
 @app.route("/api/v1/books/price-range", methods=["GET"])
 def price_range():
@@ -376,12 +456,14 @@ def price_range():
     books = query.order_by(Book.price.asc()).all()
     return jsonify([book_to_dict(b) for b in books]), 200
 
+
 # =====================
 # ML-READY (DESAFIO 2)
 # =====================
 
 RATING_MAP = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
 CATEGORY_MAP = {}
+
 
 def encode_category(c):
     if not c:
@@ -390,13 +472,16 @@ def encode_category(c):
         CATEGORY_MAP[c] = len(CATEGORY_MAP) + 1
     return CATEGORY_MAP[c]
 
+
 def encode_availability(a):
     if not a:
         return 0
     return 1 if "In stock" in a else 0
 
+
 def encode_rating(r):
     return RATING_MAP.get(r, 0)
+
 
 @app.route("/api/v1/ml/features", methods=["GET"])
 def ml_features():
@@ -416,6 +501,7 @@ def ml_features():
         "availability_encoded": encode_availability(b.availability),
         "rating_encoded": encode_rating(b.rating)
     } for b in books]), 200
+
 
 @app.route("/api/v1/ml/training-data", methods=["GET"])
 def ml_training_data():
@@ -440,6 +526,7 @@ def ml_training_data():
         "rating_encoded": encode_rating(b.rating)
     } for b in books]), 200
 
+
 @app.route("/api/v1/ml/predictions", methods=["POST"])
 @jwt_required()
 def ml_predictions():
@@ -456,6 +543,7 @@ def ml_predictions():
     data = request.get_json(force=True)
     return jsonify({"message": "Prediction received", "data": data}), 200
 
+
 # =====================
 # MONITORAMENTO (DESAFIO 3)
 # =====================
@@ -471,6 +559,7 @@ def metrics():
       200: {description: Metrics}
     """
     return jsonify(METRICS), 200
+
 
 # =====================
 # ADMIN PROTECTED (DESAFIO 1)
@@ -491,8 +580,11 @@ def scraping_trigger():
     user_id = get_jwt_identity()
     return jsonify({"message": "Scraping trigger received", "triggered_by_user_id": user_id}), 200
 
-import os
 
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
+# =====================
+# MAIN
+# =====================
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
