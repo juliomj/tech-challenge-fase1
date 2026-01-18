@@ -25,6 +25,10 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 swagger = Swagger(app)
 
+with app.app_context():
+    db.create_all()
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_api")
 
@@ -487,5 +491,8 @@ def scraping_trigger():
     user_id = get_jwt_identity()
     return jsonify({"message": "Scraping trigger received", "triggered_by_user_id": user_id}), 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+import os
+
+port = int(os.environ.get("PORT", 5000))
+app.run(host="0.0.0.0", port=port)
+
