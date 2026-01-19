@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from datetime import datetime
 
@@ -65,6 +66,16 @@ def _after_request(response):
 
 
 # =====================
+# GLOBAL ERROR HANDLER (pra enxergar 500 no Render)
+# =====================
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.exception("Erro inesperado na aplicação")
+    return jsonify({"error": "Internal Server Error"}), 500
+
+
+# =====================
 # MODELS
 # =====================
 
@@ -125,7 +136,7 @@ def auth_register():
     """
     data = request.get_json(force=True)
 
-    if "username" not in data or "password" not in data:
+    if not data or "username" not in data or "password" not in data:
         return jsonify({"error": "username and password are required"}), 400
 
     if User.query.filter_by(username=data["username"]).first():
@@ -307,11 +318,9 @@ def stats_overview():
         r = b.rating or "Unknown"
         rating_dist[r] = rating_dist.get(r, 0) + 1
 
-    return jsonify({
-        "total_books": total,
-        "avg_price": avg_price,
-        "rating_distribution": rating_dist
-    }), 200
+    return jsonify(
+        {"total_books": total, "avg_price": avg_price, "rating_distribution": rating_dist}
+    ), 200
 
 
 @app.route("/api/v1/stats/categories", methods=["GET"])
@@ -326,19 +335,22 @@ def stats_categories():
     """
     books = Book.query.all()
     by_cat = {}
+
     for b in books:
         cat = b.category or "Unknown"
         by_cat.setdefault(cat, {"total": 0, "sum_price": 0.0})
         by_cat[cat]["total"] += 1
         by_cat[cat]["sum_price"] += float(b.price)
 
-    result = [{
-        "category": c,
-        "total_books": v["total"],
-        "avg_price": round(v["sum_price"] / v["total"], 2)
-    } for c, v in by_cat.items()]
+    result = [
+        {
+            "category": c,
+            "total_books": v["total"],
+            "avg_price": round(v["sum_price"] / v["total"], 2),
+        }
+        for c, v in by_cat.items()
+    ]
     result.sort(key=lambda x: x["total_books"], reverse=True)
-
     return jsonify(result), 200
 
 
@@ -438,13 +450,18 @@ def ml_features():
       200: {description: Features list}
     """
     books = Book.query.all()
-    return jsonify([{
-        "book_id": b.id,
-        "price": b.price,
-        "category_encoded": encode_category(b.category),
-        "availability_encoded": encode_availability(b.availability),
-        "rating_encoded": encode_rating(b.rating)
-    } for b in books]), 200
+    return jsonify(
+        [
+            {
+                "book_id": b.id,
+                "price": b.price,
+                "category_encoded": encode_category(b.category),
+                "availability_encoded": encode_availability(b.availability),
+                "rating_encoded": encode_rating(b.rating),
+            }
+            for b in books
+        ]
+    ), 200
 
 
 @app.route("/api/v1/ml/training-data", methods=["GET"])
@@ -458,17 +475,22 @@ def ml_training_data():
       200: {description: Training data}
     """
     books = Book.query.all()
-    return jsonify([{
-        "id": b.id,
-        "title": b.title,
-        "price": b.price,
-        "category": b.category,
-        "category_encoded": encode_category(b.category),
-        "availability": b.availability,
-        "availability_encoded": encode_availability(b.availability),
-        "rating": b.rating,
-        "rating_encoded": encode_rating(b.rating)
-    } for b in books]), 200
+    return jsonify(
+        [
+            {
+                "id": b.id,
+                "title": b.title,
+                "price": b.price,
+                "category": b.category,
+                "category_encoded": encode_category(b.category),
+                "availability": b.availability,
+                "availability_encoded": encode_availability(b.availability),
+                "rating": b.rating,
+                "rating_encoded": encode_rating(b.rating),
+            }
+            for b in books
+        ]
+    ), 200
 
 
 @app.route("/api/v1/ml/predictions", methods=["POST"])
@@ -526,3 +548,6 @@ def scraping_trigger():
 
 
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
