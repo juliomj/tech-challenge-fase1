@@ -108,6 +108,14 @@ def book_to_dict(b: Book):
         "image_url": b.image_url,
     }
 
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "Books API - Tech Challenge",
+        "health": "/api/v1/health",
+        "swagger": "/apidocs",
+        "books": "/api/v1/books"
+    }), 200
 
 # =====================
 # AUTH (DESAFIO 1)
