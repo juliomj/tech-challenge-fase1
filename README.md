@@ -94,7 +94,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-⚠️ **Se aparecer erro dizendo que não achou o requirements.txt**, você criou ele no lugar errado.  
+**Se aparecer erro dizendo que não achou o requirements.txt**, você criou ele no lugar errado.  
 O arquivo **requirements.txt precisa ficar na raiz do projeto**, no mesmo nível do `app.py`.
 
 ---
@@ -107,13 +107,13 @@ O arquivo **requirements.txt precisa ficar na raiz do projeto**, no mesmo nível
 python scripts\scrape_books.py
 ```
 
-📄 Arquivo gerado:
+ Arquivo gerado:
 
 ```
 data/books.csv
 ```
 
-✅ O site possui **1000 livros** (50 páginas x 20 livros).  
+ O site possui **1000 livros** (50 páginas x 20 livros).  
 O CSV deve ter **1000 linhas**.
 
 ---
@@ -124,7 +124,7 @@ O CSV deve ter **1000 linhas**.
 python app.py
 ```
 
-⚠️ O Flask vai iniciar e travar o terminal (isso é normal).  
+ O Flask vai iniciar e travar o terminal (isso é normal).  
 Para parar e continuar os próximos passos, aperte:
 
 ```
@@ -139,7 +139,7 @@ CTRL + C
 python scripts\load_books_csv.py
 ```
 
-✅ Saída esperada (exemplo):
+ Saída esperada (exemplo):
 
 ```
 999 livros inseridos com sucesso!
@@ -328,12 +328,22 @@ Se aparecer a pergunta sobre rede pública/privada, escolha **Public** para comp
 Cole aqui o link do deploy:
 
 ```
-COLE_AQUI_O_LINK_DO_RENDER
+Deploy:
+https://tech-challenge-fase1-275v.onrender.com
+
+Healthcheck:
+https://tech-challenge-fase1-275v.onrender.com/api/v1/health
+
+Swagger:
+https://tech-challenge-fase1-275v.onrender.com/apidocs
+
+Books:
+https://tech-challenge-fase1-275v.onrender.com/api/v1/books
 ```
 
 ---
 
-## 🎥 Vídeo de Apresentação
+##  Vídeo de Apresentação
 
 Cole aqui o link do vídeo:
 
