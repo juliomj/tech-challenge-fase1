@@ -6,7 +6,7 @@ st.set_page_config(page_title="Books Dashboard", layout="wide")
 
 API_BASE = st.sidebar.text_input("API Base URL", "http://127.0.0.1:5000")
 
-st.title("📚 Books API — Dashboard")
+st.title(" Books API — Dashboard")
 
 col1, col2, col3 = st.columns(3)
 
@@ -26,7 +26,7 @@ except Exception as e:
 
 st.divider()
 
-st.subheader("📦 Livros (API)")
+st.subheader("Livros (API)")
 
 try:
     books = requests.get(f"{API_BASE}/api/v1/books", timeout=60).json()
