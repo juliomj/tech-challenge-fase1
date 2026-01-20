@@ -65,9 +65,6 @@ def _after_request(response):
     return response
 
 
-# =====================
-# GLOBAL ERROR HANDLER (pra enxergar 500 no Render)
-# =====================
 
 @app.errorhandler(Exception)
 def handle_exception(e):
