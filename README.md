@@ -325,7 +325,7 @@ Se aparecer a pergunta sobre rede pública/privada, escolha **Public** para comp
 
 ##  Deploy Público
 
-Cole aqui o link do deploy:
+
 
 ```
 Deploy:
@@ -339,15 +339,24 @@ https://tech-challenge-fase1-275v.onrender.com/apidocs
 
 Books:
 https://tech-challenge-fase1-275v.onrender.com/api/v1/books
+
+
 ```
 
 ---
 
 ##  Vídeo de Apresentação
 
-Cole aqui o link do vídeo:
+
 
 ```
-COLE_AQUI_O_LINK_DO_VIDEO
+https://www.youtube.com/watch?v=xymdfxZW9Pg
 ```
 
+##  Repositorio GITHUB
+
+
+
+```
+https://github.com/juliomj/tech-challenge-fase1
+```
